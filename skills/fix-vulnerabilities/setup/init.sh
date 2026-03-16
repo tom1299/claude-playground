@@ -31,6 +31,7 @@ install_trivy_operator() {
     helm upgrade --install trivy-operator aqua/trivy-operator \
         --namespace "${TRIVY_NAMESPACE}" \
         --create-namespace \
+        --set targetNamespaces="test" \
         --wait
 }
 
@@ -52,10 +53,16 @@ create_namespace() {
     kubectl create namespace "${NAMESPACE}"
 }
 
+delete_vulnerability_reports() {
+    echo "Deleting existing vulnerability reports in namespace '${NAMESPACE}'..."
+    kubectl delete vulnerabilityreports --all --namespace "${NAMESPACE}" 2>/dev/null || true
+}
+
 recycle_nginx_deployment() {
     if kubectl get deployment "${NGINX_DEPLOYMENT}" --namespace "${NAMESPACE}" &>/dev/null; then
-        echo "Recycling existing nginx deployment..."
-        kubectl delete deployment "${NGINX_DEPLOYMENT}" --namespace "${NAMESPACE}"
+        echo "Restarting existing nginx deployment..."
+        kubectl rollout restart deployment/"${NGINX_DEPLOYMENT}" --namespace "${NAMESPACE}"
+        return
     fi
 
     echo "Deploying nginx with image '${NGINX_IMAGE}'..."
@@ -97,15 +104,14 @@ confirm_vulnerabilities_detected() {
     local vuln_count
     vuln_count=$(kubectl get vulnerabilityreports \
         --namespace "${NAMESPACE}" \
-        -o jsonpath='{.items[*].report.summary.criticalCount} {.items[*].report.summary.highCount}' \
-        2>/dev/null | tr ' ' '\n' | awk '{sum += $1} END {print sum}')
+        -o jsonpath='{.items[0].report.summary.criticalCount}')
 
     if [ "${vuln_count}" -gt 0 ]; then
-        echo "Confirmed: ${vuln_count} critical/high vulnerabilities detected."
+        echo "Confirmed: ${vuln_count} critical vulnerabilities detected in first report."
         return
     fi
 
-    echo "WARNING: No critical or high vulnerabilities detected. Check the reports manually."
+    echo "WARNING: No critical vulnerabilities detected. Check the reports manually."
     kubectl get vulnerabilityreports --namespace "${NAMESPACE}" -o wide
 }
 
@@ -114,6 +120,7 @@ main() {
     install_trivy_operator
     verify_trivy_operator
     create_namespace
+    delete_vulnerability_reports
     recycle_nginx_deployment
     wait_for_vulnerability_report
     confirm_vulnerabilities_detected
