@@ -1,0 +1,9 @@
+trivyOperator:
+  scanJobCustomVolumesMount:
+    - name: trivy-cache
+      mountPath: /tmp/trivy/.cache
+      readOnly: false
+  scanJobCustomVolumes:
+    - name: trivy-cache
+      persistentVolumeClaim:
+        claimName: trivy-cache
