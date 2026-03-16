@@ -8,6 +8,7 @@ NGINX_DEPLOYMENT="nginx"
 # Use an outdated nginx version to ensure vulnerabilities are detected
 NGINX_IMAGE="nginx:1.21.0"
 TRIVY_NAMESPACE="trivy-system"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 cluster_exists() {
     kind get clusters 2>/dev/null | grep -q "^${CLUSTER_NAME}$"
@@ -23,6 +24,17 @@ create_cluster() {
     kind create cluster --name "${CLUSTER_NAME}"
 }
 
+create_trivy_cache_pvc() {
+    if kubectl get pvc trivy-cache --namespace "${TRIVY_NAMESPACE}" &>/dev/null; then
+        echo "PVC 'trivy-cache' already exists in '${TRIVY_NAMESPACE}', skipping."
+        return
+    fi
+
+    echo "Creating PVC 'trivy-cache' in namespace '${TRIVY_NAMESPACE}'..."
+    kubectl create namespace "${TRIVY_NAMESPACE}" --dry-run=client -o yaml | kubectl apply -f -
+    kubectl apply -f "${SCRIPT_DIR}/trivy-cache-pvc.yaml"
+}
+
 install_trivy_operator() {
     echo "Installing trivy-operator..."
     helm repo add aqua https://aquasecurity.github.io/helm-charts/ --force-update
@@ -31,7 +43,7 @@ install_trivy_operator() {
     helm upgrade --install trivy-operator aqua/trivy-operator \
         --namespace "${TRIVY_NAMESPACE}" \
         --create-namespace \
-        --set targetNamespaces="test" \
+        -f "${SCRIPT_DIR}/values.yaml" \
         --wait
 }
 
@@ -117,6 +129,7 @@ confirm_vulnerabilities_detected() {
 
 main() {
     create_cluster
+    create_trivy_cache_pvc
     install_trivy_operator
     verify_trivy_operator
     create_namespace
