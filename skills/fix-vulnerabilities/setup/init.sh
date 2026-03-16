@@ -44,6 +44,7 @@ install_trivy_operator() {
         --namespace "${TRIVY_NAMESPACE}" \
         --create-namespace \
         -f "${SCRIPT_DIR}/values.yaml" \
+        --set "targetNamespaces=${NAMESPACE}" \
         --wait
 }
 
