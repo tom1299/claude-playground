@@ -1,3 +1,4 @@
 .idea/
 .venv/
 skills/fix-vulnerabilities/logs/*
+logs/
