@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-CLUSTER_NAME="fix-vulnerabilies-skill-test"
+CLUSTER_NAME="fix-vulnerabilities-skill-test"
 NAMESPACE="test"
 NGINX_DEPLOYMENT="nginx"
 # Use an outdated nginx version to ensure vulnerabilities are detected
@@ -130,10 +130,10 @@ confirm_vulnerabilities_detected() {
 
 main() {
     create_cluster
+    create_namespace
     create_trivy_cache_pvc
     install_trivy_operator
     verify_trivy_operator
-    create_namespace
     delete_vulnerability_reports
     recycle_nginx_deployment
     wait_for_vulnerability_report
