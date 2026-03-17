@@ -1,7 +1,7 @@
 [project]
 name = "vul_functions"
 version = "0.1.0"
-description = "Add your description here"
+description = "Python functions used by ix vulnerabilities skill"
 readme = "README.md"
 authors = [
     { name = "tom1299", email = "tom1299@jeeatwork.com" }
