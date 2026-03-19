@@ -1,3 +1,12 @@
+# Exclude system namespaces
+targetNamespaces: ""
+excludeNamespaces: "default,kube-*,trivy-system,local-path-storage"
+
+operator:
+  # Needs to be one because pvc in kind and local storage does not support ReadWriteMany
+  # See cache configuration in trivyOperator section below
+  scanJobsConcurrentLimit: 1
+
 trivyOperator:
   scanJobCustomVolumesMount:
     - name: trivy-cache
