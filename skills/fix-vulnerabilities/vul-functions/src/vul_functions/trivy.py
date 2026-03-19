@@ -1,0 +1,43 @@
+from kubernetes import client, config
+from kubernetes.client.exceptions import ApiException
+from functools import lru_cache
+
+TRIVY_GROUP = "aquasecurity.github.io"
+TRIVY_VERSION = "v1alpha1"
+TRIVY_PLURAL = "vulnerabilityreports"
+
+
+@lru_cache(maxsize=1)
+def _load_kube_config() -> None:
+    """Load Kubernetes configuration once per process.
+
+    Using an lru_cache prevents repeated reads of kubeconfig and
+    re-initialization of global client configuration in polling loops.
+    """
+    config.load_kube_config()
+
+
+def _check_namespace_exists(core_api: client.CoreV1Api, namespace: str) -> None:
+    try:
+        core_api.read_namespace(namespace)
+    except ApiException as e:
+        if e.status == 404:
+            raise ValueError(f"Namespace '{namespace}' does not exist") from None
+        raise
+
+
+def get_vulnerability_reports(namespace: str) -> list[dict]:
+    """Return all Trivy VulnerabilityReports in the given namespace as dicts.
+
+    Raises:
+        ValueError: If the namespace does not exist.
+    """
+    _load_kube_config()
+    core_api = client.CoreV1Api()
+    _check_namespace_exists(core_api, namespace)
+
+    custom_api = client.CustomObjectsApi()
+    response = custom_api.list_namespaced_custom_object(
+        TRIVY_GROUP, TRIVY_VERSION, namespace, TRIVY_PLURAL
+    )
+    return response["items"]
