@@ -1,9 +1,20 @@
 from kubernetes import client, config
 from kubernetes.client.exceptions import ApiException
+from functools import lru_cache
 
 TRIVY_GROUP = "aquasecurity.github.io"
 TRIVY_VERSION = "v1alpha1"
 TRIVY_PLURAL = "vulnerabilityreports"
+
+
+@lru_cache(maxsize=1)
+def _load_kube_config() -> None:
+    """Load Kubernetes configuration once per process.
+
+    Using an lru_cache prevents repeated reads of kubeconfig and
+    re-initialization of global client configuration in polling loops.
+    """
+    config.load_kube_config()
 
 
 def _check_namespace_exists(core_api: client.CoreV1Api, namespace: str) -> None:
@@ -21,7 +32,7 @@ def get_vulnerability_reports(namespace: str) -> list[dict]:
     Raises:
         ValueError: If the namespace does not exist.
     """
-    config.load_kube_config()
+    _load_kube_config()
     core_api = client.CoreV1Api()
     _check_namespace_exists(core_api, namespace)
 
