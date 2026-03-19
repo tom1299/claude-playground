@@ -22,7 +22,7 @@ def _check_namespace_exists(core_api: client.CoreV1Api, namespace: str) -> None:
         core_api.read_namespace(namespace)
     except ApiException as e:
         if e.status == 404:
-            raise ValueError(f"Namespace '{namespace}' does not exist")
+            raise ValueError(f"Namespace '{namespace}' does not exist") from None
         raise
 
 

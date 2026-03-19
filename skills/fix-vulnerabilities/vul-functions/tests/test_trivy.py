@@ -120,8 +120,10 @@ class TestGetVulnerabilityReports:
         assert any(count > 0 for count in critical_counts)
 
     def test_nonexistent_namespace_raises_value_error(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError) as exc_info:
             get_vulnerability_reports("nonexistent-namespace-xyz-12345")
+        assert exc_info.value.__cause__ is None
+        assert exc_info.value.__context__ is None
 
     def test_empty_namespace_returns_empty_list(self, empty_trivy_namespace):
         reports = get_vulnerability_reports(empty_trivy_namespace)
