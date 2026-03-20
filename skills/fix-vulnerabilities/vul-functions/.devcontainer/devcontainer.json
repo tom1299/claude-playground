@@ -1,0 +1,22 @@
+{
+  "name": "Claude Code Sandbox",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      "USER_UID": "1000",
+      "USER_GID": "1000"
+    }
+  },
+  "runArgs": [
+    "--network=host",
+    "--cap-add=NET_ADMIN",
+    "--cap-add=NET_RAW"
+  ],
+  "remoteUser": "devuser",
+  "mounts": [
+    "source=${localEnv:HOME}/.claude.json,target=/home/devuser/.claude.json,type=bind",
+    "source=${localEnv:HOME}/.kube,target=/home/devuser/.kube,type=bind"
+  ],
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
+  "workspaceFolder": "/workspace"
+}
