@@ -14,7 +14,8 @@
   ],
   "remoteUser": "devuser",
   "mounts": [
-    "source=${localEnv:HOME}/.claude.json,target=/home/devuser/.claude.json,type=bind"
+    "source=${localEnv:HOME}/.claude.json,target=/home/devuser/.claude.json,type=bind",
+    "source=${localEnv:HOME}/.kube,target=/home/devuser/.kube,type=bind"
   ],
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
   "workspaceFolder": "/workspace"
