@@ -4,7 +4,8 @@
     "dockerfile": "Dockerfile",
     "args": {
       "USER_UID": "1000",
-      "USER_GID": "1000"
+      "USER_GID": "1000",
+      "USERNAME": "${localEnv:USER}"
     }
   },
   "runArgs": [
@@ -12,11 +13,11 @@
     "--cap-add=NET_ADMIN",
     "--cap-add=NET_RAW"
   ],
-  "remoteUser": "devuser",
+  "remoteUser": "${localEnv:USER}",
   "mounts": [
-    "source=${localEnv:HOME}/.claude.json,target=/home/devuser/.claude.json,type=bind",
-    "source=${localEnv:HOME}/.kube,target=/home/devuser/.kube,type=bind"
+    "source=${localEnv:HOME}/.claude.json,target=${localEnv:HOME}/.claude.json,type=bind",
+    "source=${localEnv:HOME}/.kube,target=${localEnv:HOME}/.kube,type=bind"
   ],
-  "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=delegated",
-  "workspaceFolder": "/workspace"
+  "workspaceMount": "source=${localWorkspaceFolder},target=/${localEnv:HOME}/git/claude-playground/skills/fix-vulnerabilities/vul-functions,type=bind,consistency=delegated",
+  "workspaceFolder": "${localEnv:HOME}/git/claude-playground/skills/fix-vulnerabilities/vul-functions"
 }
