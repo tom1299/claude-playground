@@ -18,6 +18,6 @@
     "source=${localEnv:HOME}/.claude.json,target=${localEnv:HOME}/.claude.json,type=bind",
     "source=${localEnv:HOME}/.kube,target=${localEnv:HOME}/.kube,type=bind"
   ],
-  "workspaceMount": "source=${localWorkspaceFolder},target=/${localEnv:HOME}/git/claude-playground/skills/fix-vulnerabilities/vul-functions,type=bind,consistency=delegated",
-  "workspaceFolder": "${localEnv:HOME}/git/claude-playground/skills/fix-vulnerabilities/vul-functions"
+  "workspaceMount": "source=${localWorkspaceFolder},target=/${localEnv:HOME}/git/github/claude-playground/skills/fix-vulnerabilities/vul-functions,type=bind,consistency=delegated",
+  "workspaceFolder": "${localEnv:HOME}/git/github/claude-playground/skills/fix-vulnerabilities/vul-functions"
 }
