@@ -12,5 +12,5 @@ source "$WORKSPACE_FOLDER/.venv/bin/activate"
 
 echo "Syncing project dependencies with uv..."
 cd "$WORKSPACE_FOLDER"
-uv sync --active
+uv sync --python=/usr/bin/python --active
 

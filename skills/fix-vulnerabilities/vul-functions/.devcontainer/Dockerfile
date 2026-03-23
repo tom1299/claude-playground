@@ -5,7 +5,8 @@ RUN apk add --no-cache \
     bash \
     ca-certificates \
     github-cli \
-    python3-dev
+    python3-dev \
+    skopeo
 
 RUN curl -Lo /usr/local/bin/kubectl https://dl.k8s.io/release/v1.35.0/bin/linux/amd64/kubectl \
     && chmod +x /usr/local/bin/kubectl
@@ -24,6 +25,8 @@ RUN curl -fsSL https://claude.ai/install.sh | bash && \
     echo "export PATH=\"\$HOME/.local/bin:\$PATH\"" >> ~/.bashrc
 
 RUN wget -qO- https://astral.sh/uv/install.sh | sh
+
+RUN curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b $HOME/.local/bin v0.69.3
 
 RUN mkdir -p /home/${USERNAME}/.kube
 
