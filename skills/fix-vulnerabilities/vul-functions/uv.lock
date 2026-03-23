@@ -327,6 +327,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "kubernetes" },
+    { name = "pytest" },
 ]
 
 [package.dev-dependencies]
@@ -335,7 +336,10 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "kubernetes", specifier = ">=35.0.0" }]
+requires-dist = [
+    { name = "kubernetes", specifier = ">=35.0.0" },
+    { name = "pytest", specifier = ">=9.0.2" },
+]
 
 [package.metadata.requires-dev]
 dev = [{ name = "pytest", specifier = ">=9.0.2" }]

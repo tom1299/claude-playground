@@ -13,11 +13,16 @@
     "--cap-add=NET_ADMIN",
     "--cap-add=NET_RAW"
   ],
-  "remoteUser": "${localEnv:USER}",
+  "remoteUser": "treuhl",
+  "containerUser": "treuhl",
   "mounts": [
     "source=${localEnv:HOME}/.claude.json,target=${localEnv:HOME}/.claude.json,type=bind",
     "source=${localEnv:HOME}/.kube,target=${localEnv:HOME}/.kube,type=bind"
   ],
   "workspaceMount": "source=${localWorkspaceFolder},target=/${localEnv:HOME}/git/github/claude-playground/skills/fix-vulnerabilities/vul-functions,type=bind,consistency=delegated",
-  "workspaceFolder": "${localEnv:HOME}/git/github/claude-playground/skills/fix-vulnerabilities/vul-functions"
+  "workspaceFolder": "${localEnv:HOME}/git/github/claude-playground/skills/fix-vulnerabilities/vul-functions",
+  "postStartCommand": ".devcontainer/post-start.sh",
+  "remoteEnv": {
+    "WORKSPACE_FOLDER": "${localEnv:HOME}/git/github/claude-playground/skills/fix-vulnerabilities/vul-functions"
+  }
 }

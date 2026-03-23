@@ -5,9 +5,7 @@ RUN apk add --no-cache \
     bash \
     ca-certificates \
     github-cli \
-    python3-dev \
-    py3-pip \
-    && ln -sf /usr/bin/python3 /usr/local/bin/python
+    python3-dev
 
 RUN curl -Lo /usr/local/bin/kubectl https://dl.k8s.io/release/v1.35.0/bin/linux/amd64/kubectl \
     && chmod +x /usr/local/bin/kubectl
