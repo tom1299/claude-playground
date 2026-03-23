@@ -14,6 +14,10 @@ def get_image_labels(image: str, tag: str = "latest") -> dict:
         dict of label key/value pairs
     """
     parts = image.split("/", 1)
+    if len(parts) != 2 or not parts[0] or not parts[1]:
+        raise ValueError(
+            f"image must be a fully qualified name like 'registry/repository', got: {image!r}"
+        )
     registry = parts[0]
     repo = parts[1]
 
