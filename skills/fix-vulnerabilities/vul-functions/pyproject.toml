@@ -19,6 +19,12 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",
+    "pytest-dependency>=0.6.1",
+]
+
+[tool.pytest.ini_options]
+markers = [
+    "dependency: mark test dependencies (honored only with --with-dependencies flag)",
 ]
 
 [tool.uv]

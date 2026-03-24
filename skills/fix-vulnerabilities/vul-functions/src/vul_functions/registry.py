@@ -1,5 +1,6 @@
 import urllib.request
 import json
+from urllib.request import Request
 
 
 def get_image_labels(image: str, tag: str = "latest") -> dict:
@@ -21,34 +22,43 @@ def get_image_labels(image: str, tag: str = "latest") -> dict:
     registry = parts[0]
     repo = parts[1]
 
-    token = _get_token(registry, repo)
-    config_digest = _get_config_digest(registry, repo, tag, token)
-    return _get_labels_from_blob(registry, repo, config_digest, token)
+    token = get_token(registry, repo)
+    image_digest = get_image_digest(registry, repo, tag, token)
+    return get_annotations(registry, repo, image_digest, token)
 
 
-def _get_token(registry: str, repo: str) -> str:
+def get_token(registry: str, repo: str) -> str:
     token_url = f"https://{registry}/token?service={registry}&scope=repository:{repo}:pull"
     with urllib.request.urlopen(token_url) as resp:
         return json.loads(resp.read())["token"]
 
 
-def _get_config_digest(registry: str, repo: str, tag: str, token: str) -> str:
-    url = f"https://{registry}/v2/{repo}/manifests/{tag}"
+def get_image_digest(registry: str, repo: str, tag: str, token: str) -> str:
+    req = get_manifest(registry, repo, tag, token)
+    with urllib.request.urlopen(req) as resp:
+        response = json.loads(resp.read())
+
+    for manifest in response.get("manifests", []):
+        if manifest.get("digest"):
+            return manifest["digest"]
+    else:
+        raise ValueError(f"Config digest not found in manifest for {registry}/{repo}:{tag}")
+
+def get_annotations(registry: str, repo: str, tag: str, token: str) -> dict:
+    req = get_manifest(registry, repo, tag, token)
+    with urllib.request.urlopen(req) as resp:
+        response = json.loads(resp.read())
+    return response.get("annotations")
+
+
+def get_manifest(registry: str, repo: str, manifest_identifier: str, token: str) -> Request:
+    url = f"https://{registry}/v2/{repo}/manifests/{manifest_identifier}"
     req = urllib.request.Request(url, headers={
         "Authorization": f"Bearer {token}",
         "Accept": (
             "application/vnd.docker.distribution.manifest.v2+json,"
-            "application/vnd.oci.image.manifest.v1+json"
+            "application/vnd.oci.image.manifest.v1+json,"
+            "application/vnd.oci.image.index.v1+json"
         ),
     })
-    with urllib.request.urlopen(req) as resp:
-        manifest = json.loads(resp.read())
-    return manifest["config"]["digest"]
-
-
-def _get_labels_from_blob(registry: str, repo: str, digest: str, token: str) -> dict:
-    url = f"https://{registry}/v2/{repo}/blobs/{digest}"
-    req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
-    with urllib.request.urlopen(req) as resp:
-        config = json.loads(resp.read())
-    return config.get("config", {}).get("Labels") or {}
+    return req
