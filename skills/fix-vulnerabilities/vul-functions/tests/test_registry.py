@@ -34,7 +34,6 @@ def test_get_image_labels():
     assert labels.get("org.opencontainers.image.source") == "https://github.com/tom1299/nginx"
 
 @pytest.mark.dependency(depends=["test_get_image_labels"])
-@pytest.mark.xfail(reason="Implementation for images without registry is incomplete")
 def test_get_image_labels_docker_hub():
     # Images without registry should us "docker.io" as the default registry
     labels = get_image_labels("busybox", "1.36")
