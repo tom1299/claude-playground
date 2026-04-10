@@ -1,0 +1,69 @@
+services:
+  copilot:
+    container_name: copilot
+    image: copilot-agent-image
+    environment:
+      - http_proxy=${http_proxy}
+      - https_proxy=${https_proxy}
+      - no_proxy=dind,buildkitd,${no_proxy}
+      - HTTP_PROXY=${http_proxy}
+      - HTTPS_PROXY=${https_proxy}
+      - NO_PROXY=dind,buildkitd,${no_proxy}
+      - BUILDKIT_HOST=tcp://buildkitd:1234
+      - DOCKER_HOST=tcp://dind:2375
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        http_proxy: ${http_proxy}
+        https_proxy: ${https_proxy}
+        no_proxy: ${no_proxy}
+    depends_on:
+      - buildkitd
+      - dind
+    working_dir: /workspace
+    volumes:
+      - ..:/workspace
+    stdin_open: true
+    tty: true
+
+  buildkitd:
+    container_name: buildkitd
+    image: moby/buildkit:v0.29.0-rootless
+    entrypoint: []
+    environment:
+      - http_proxy=${http_proxy}
+      - https_proxy=${https_proxy}
+      - no_proxy=dind,buildkitd,${no_proxy}
+      - HTTP_PROXY=${http_proxy}
+      - HTTPS_PROXY=${https_proxy}
+      - NO_PROXY=dind,buildkitd,${no_proxy}
+      - BUILDKIT_HOST=tcp://127.0.0.1:1234
+    ports:
+      - "1234:1234"
+    security_opt:
+      - seccomp=unconfined
+    volumes:
+      - buildkitd-state:/home/user/.local/share/buildkit
+      - ./buildkitd.toml:/etc/buildkit/buildkitd.toml
+    command: ["rootlesskit", "buildkitd", "--addr", "tcp://0.0.0.0:1234", "--oci-worker-no-process-sandbox", "--debug", "--config", "/etc/buildkit/buildkitd.toml"]
+
+  dind:
+    container_name: dind
+    image: docker:28.1.1-dind
+    privileged: true
+    entrypoint: ["/usr/local/bin/dind-entrypoint.sh"]
+    command: ["dockerd"]
+    environment:
+      - DOCKER_TLS_CERTDIR=
+      - DNS_SERVER=${DNS_SERVER:-}
+      - http_proxy=${http_proxy}
+      - https_proxy=${https_proxy}
+      - no_proxy=${no_proxy}
+    volumes:
+      - dind-data:/var/lib/docker
+      - ./dind-entrypoint.sh:/usr/local/bin/dind-entrypoint.sh:ro
+
+volumes:
+  buildkitd-state:
+  dind-data:
