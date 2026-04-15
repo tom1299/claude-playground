@@ -11,19 +11,29 @@ services:
       - NO_PROXY=dind,buildkitd,${no_proxy}
       - BUILDKIT_HOST=tcp://buildkitd:1234
       - DOCKER_HOST=tcp://dind:2375
+      - GL_TOKEN=${GL_TOKEN}
+      - GH_TOKEN=${GH_TOKEN}
+      - GITLAB_API_HOST=${GITLAB_API_HOST}
+      - GITLAB_REGISTRY_HOST=${GITLAB_REGISTRY_HOST}
+      - GITLAB_INTERNAL_REGISTRY_HOST=${GITLAB_INTERNAL_REGISTRY_HOST}
+      - HARBOR_TOKEN=${HARBOR_TOKEN}
+      - HARBOR_USERNAME=${HARBOR_USERNAME}
+      - HARBOR_HOST=${HARBOR_HOST}
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.go
       args:
         http_proxy: ${http_proxy}
         https_proxy: ${https_proxy}
         no_proxy: ${no_proxy}
+    entrypoint: /init-copilot.sh
+    command: ["sleep", "infinity"]
     depends_on:
       - buildkitd
       - dind
     working_dir: /workspace
     volumes:
-      - ..:/workspace
+      - ${WORKSPACE_DIR:-..}:/workspace
     stdin_open: true
     tty: true
 

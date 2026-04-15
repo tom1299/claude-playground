@@ -1,5 +1,5 @@
 # Build behind proxy using proxy env vars from host:
-# docker build --build-arg http_proxy=$http_proxy --build-arg https_proxy=$https_proxy --build-arg no_proxy=$no_proxy .
+# docker build -f Dockerfile.base --build-arg http_proxy=$http_proxy --build-arg https_proxy=$https_proxy --build-arg no_proxy=$no_proxy .
 FROM moby/buildkit:v0.29.0 AS buildkit
 
 FROM ubuntu:24.04
@@ -7,6 +7,9 @@ FROM ubuntu:24.04
 ARG http_proxy
 ARG https_proxy
 ARG no_proxy
+ARG USER_NAME=ubuntu
+ARG USER_UID=1000
+ARG USER_GID=1000
 
 ENV BUILDKIT_HOST=tcp://buildkitd:1234
 ENV DEBIAN_FRONTEND=noninteractive
@@ -23,6 +26,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tar \
     telnet \
     traceroute \
+    vim \
+    lsb-release \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
 ARG GH_VERSION=2.89.0
@@ -40,14 +46,6 @@ RUN curl -fsSL -o /tmp/glab.tar.gz \
     && echo "${GLAB_CHECKSUM}  /tmp/glab.tar.gz" | sha256sum -c - \
     && tar -xzf /tmp/glab.tar.gz -C /usr/local/bin --strip-components=1 bin/glab \
     && rm /tmp/glab.tar.gz
-
-ARG YQ_VERSION=v4.52.5
-ARG YQ_CHECKSUM=75d893a0d5940d1019cb7cdc60001d9e876623852c31cfc6267047bc31149fa9
-RUN curl -fsSL -o /tmp/yq \
-      "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" \
-    && echo "${YQ_CHECKSUM}  /tmp/yq" | sha256sum -c - \
-    && install -m 755 /tmp/yq /usr/local/bin/yq \
-    && rm /tmp/yq
 
 ARG COPILOT_VERSION=v1.0.21
 ARG COPILOT_CHECKSUM=a6fc494a3dd5a76246fb33424baf08abb5b4cb6889fff28cf295155c28b1cf77
@@ -67,11 +65,13 @@ RUN curl -fsSL -o /tmp/docker.tgz \
 
 COPY --from=buildkit /usr/bin/buildctl /usr/bin/buildctl
 
-RUN groupadd copilot && useradd -g copilot -m -d /home/copilot copilot \
-    && mkdir -p /workspace \
-    && chown -R copilot:copilot /home/copilot /workspace
+COPY init-copilot.sh /init-copilot.sh
+RUN chmod +x /init-copilot.sh
 
-USER copilot
+RUN mkdir -p /workspace \
+  && chown -R ${USER_UID}:${USER_GID} /home/${USER_NAME} /workspace
+
+USER ${USER_NAME}
 WORKDIR /workspace
 
 CMD ["sleep", "infinity"]

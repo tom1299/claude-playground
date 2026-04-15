@@ -1,0 +1,72 @@
+# Dockerfile.cloud - Extends base image with cloud tools
+# docker build -f Dockerfile.cloud --build-arg http_proxy=$http_proxy --build-arg https_proxy=$https_proxy --build-arg no_proxy=$no_proxy .
+FROM agent.base:latest
+
+ARG http_proxy
+ARG https_proxy
+ARG no_proxy
+ARG USER_NAME=ubuntu
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+USER 0
+
+# Install additional system packages needed for cloud tools
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
+
+# kubectl - Kubernetes CLI
+ARG KUBECTL_VERSION=v1.35.1
+ARG KUBECTL_CHECKSUM=36e2f4ac66259232341dd7866952d64a958846470f6a9a6a813b9117bd965207
+RUN curl -fsSL -o /usr/local/bin/kubectl \
+      "https://dl.k8s.io/${KUBECTL_VERSION}/bin/linux/amd64/kubectl" \
+    && echo "${KUBECTL_CHECKSUM}  /usr/local/bin/kubectl" | sha256sum -c - \
+    && chmod +x /usr/local/bin/kubectl
+
+# kustomize - Kubernetes configuration management
+ARG KUSTOMIZE_VERSION=5.8.1
+ARG KUSTOMIZE_CHECKSUM=029a7f0f4e1932c52a0476cf02a0fd855c0bb85694b82c338fc648dcb53a819d
+RUN curl -fsSL -o /tmp/kustomize.tar.gz \
+      "https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize/v${KUSTOMIZE_VERSION}/kustomize_v${KUSTOMIZE_VERSION}_linux_amd64.tar.gz" \
+    && echo "${KUSTOMIZE_CHECKSUM}  /tmp/kustomize.tar.gz" | sha256sum -c - \
+    && tar -xzf /tmp/kustomize.tar.gz -C /usr/local/bin kustomize \
+    && rm /tmp/kustomize.tar.gz
+
+# flux - GitOps tool
+ARG FLUX_VERSION=2.8.5
+ARG FLUX_CHECKSUM=63c178ba938a5443265b2ce02691c005acf4ef6188d4dbb9b9d87333558948c4
+RUN curl -fsSL -o /tmp/flux.tar.gz \
+      "https://github.com/fluxcd/flux2/releases/download/v${FLUX_VERSION}/flux_${FLUX_VERSION}_linux_amd64.tar.gz" \
+    && echo "${FLUX_CHECKSUM}  /tmp/flux.tar.gz" | sha256sum -c - \
+    && tar -xzf /tmp/flux.tar.gz -C /usr/local/bin flux \
+    && rm /tmp/flux.tar.gz
+
+ARG YQ_VERSION=v4.52.5
+ARG YQ_CHECKSUM=75d893a0d5940d1019cb7cdc60001d9e876623852c31cfc6267047bc31149fa9
+RUN curl -fsSL -o /tmp/yq \
+      "https://github.com/mikefarah/yq/releases/download/${YQ_VERSION}/yq_linux_amd64" \
+    && echo "${YQ_CHECKSUM}  /tmp/yq" | sha256sum -c - \
+    && install -m 755 /tmp/yq /usr/local/bin/yq \
+    && rm /tmp/yq
+
+ARG HELM_VERSION=v4.1.4
+ARG HELM_CHECKSUM=70b2c30a19da4db264dfd68c8a3664e05093a361cefd89572ffb36f8abfa3d09
+RUN curl -fsSL -o /tmp/helm.tar.gz \
+      "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz" \
+    && echo "${HELM_CHECKSUM}  /tmp/helm.tar.gz" | sha256sum -c - \
+    && tar -xzf /tmp/helm.tar.gz -C /usr/local/bin --strip-components=1 linux-amd64/helm \
+    && rm /tmp/helm.tar.gz
+
+ARG HELM_UNITTEST_VERSION=1.0.3
+ARG HELM_UNITTEST_CHECKSUM=9761f23d9509c98770c026e019e743b524b57010f4bc29175f78d2582ace0633
+RUN curl -fsSL -o /tmp/helm-unittest.tar.gz \
+      "https://github.com/helm-unittest/helm-unittest/releases/download/v${HELM_UNITTEST_VERSION}/helm-unittest-linux-amd64-${HELM_UNITTEST_VERSION}.tgz" \
+    && echo "${HELM_UNITTEST_CHECKSUM}  /tmp/helm-unittest.tar.gz" | sha256sum -c - \
+    && mkdir -p /home/${USER_NAME}/.local/share/helm/plugins/unittest \
+    && tar -xzf /tmp/helm-unittest.tar.gz -C /home/${USER_NAME}/.local/share/helm/plugins/unittest \
+    && rm /tmp/helm-unittest.tar.gz
+
+USER ${USER_NAME}
+WORKDIR /workspace
+
+CMD ["sleep", "infinity"]
